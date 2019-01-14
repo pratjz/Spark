@@ -2,7 +2,7 @@
 
 ## Architecture
 
-In this section we discuss the design and implementation of Apache Spark.
+In this section we will try and go deep inside the design and implementation of Apache Spark.
 
 ### Contents
 

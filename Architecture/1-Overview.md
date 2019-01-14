@@ -7,7 +7,7 @@ This chapter aims to answer the following questions:
 **Q2: How is the Spark application created and executed?**
 
 ## Deployment Diagram
-![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/deploy.png)
+![deploy](../deploy.png)
 
 We can see from the deployment diagram (Standalone version):
   - A Spark cluster has a Master node and multiple Worker nodes, which are equivalent to Hadoop's Master and Slave nodes.

@@ -91,7 +91,7 @@ object GroupByTest {
 ```
 
 The code runs like the following figure in our brains:
-![deploy](../PNGfigures/UserView.png)
+![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/UserView.png)
 
 Since this is a simple application, let's estimate the runtime data size in each step:
 
@@ -119,7 +119,7 @@ The function call of `RDD.toDebugString` can return the logical plan:
 ```
 
 We can draw a diagram to illustrate logical plan:
-![deploy](../PNGfigures/JobRDD.png)
+![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/JobRDD.png)
 
 > Note that the **data in the partition** block only shows what data will be generated in this partition, but this does not mean that these data all reside in memory at the same time.
 
@@ -142,7 +142,7 @@ Let's detail the logical plan:
 The logical plan aims to model the dataflow, not the execution flow. The dataflow and execution flow are unified in Hadoop. In Hadoop, the dataflow is pre-defined and fixed, users just need to write map() and reduce() functions. The map/reduce tasks have fixed processing steps. However in Spark, the dataflow is very flexible and could be very complicated, so it's difficult to simply combine the dataflow and execution flow together. For this reason, Spark separates the dataflow from the actual task execution, and has algorithms to transform a logical plan into a physical plan. We'll discuss this transformation in later chapters.
 
 For the example application, let's draw its physical DAG:
-![deploy](../PNGfigures/PhysicalView.png)
+![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/PhysicalView.png)
 
 We can see that the GroupByTest application generates 2 Spark jobs, the first job is triggered by the first action (i.e., `pairs1.count()`). Let's detail this first job:
 

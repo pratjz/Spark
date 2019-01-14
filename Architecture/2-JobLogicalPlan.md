@@ -1,7 +1,7 @@
 # Job Logical Plan
 
 ## An example of general logical plan
-![deploy](../PNGfigures/GeneralLogicalPlan.png)
+![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/GeneralLogicalPlan.png)
 
 The above figure illustrates a general job logical plan, which takes 4 steps to get the final result:
 
@@ -89,7 +89,7 @@ Note that:
 
 The two dependencies are illustrated in the following figure.
 
-![Dependency](../PNGfigures/Dependency.png)
+![Dependency](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/Dependency.png)
 
 According to the definition, the first three cases are `NarrowDependency` and the last one is `ShuffleDependency`.
 
@@ -113,7 +113,7 @@ An `OneToOneDependency` case is shown in the following figure. Although the data
 
 The difference between the two patterns on the right side is similar to the following code snippets.
 
-![Dependency](../PNGfigures/OneToOneDependency.png)
+![Dependency](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/OneToOneDependency.png)
 
 Code of iter.f():
 ```java
@@ -131,13 +131,13 @@ output f(array)
 
 **1) union(otherRDD)**
 
-![union](../PNGfigures/union.png)
+![union](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/union.png)
 
 `union()` simply combines two RDDs together. It never changes the data of a partition. `RangeDependency`(1:1) retains the borders of original RDDs in order to make it easy to revisit the original partitions.
 
 **2) groupByKey(numPartitions)** [changed in 1.3]
 
-![groupByKey](../PNGfigures/groupByKey.png)
+![groupByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/groupByKey.png)
 
 We have talked about `groupByKey`'s dependency before, now we make it more clear.
 
@@ -149,19 +149,19 @@ We have talked about `groupByKey`'s dependency before, now we make it more clear
 
 **2) reduceyByKey(func, numPartitions)** [changed in 1.3]
 
-![reduceyByKey](../PNGfigures/reduceByKey.png)
+![reduceyByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/reduceByKey.png)
 
 `reduceByKey()` is similar to `reduce()` in MapReduce. The data flow is equivalent. `reduceByKey` enables map-side combine by default, which is carried out by `mapPartitions()` before shuffle and results in `MapPartitionsRDD`. After shuffle, `aggregate + mapPartitions()` is applied to `ShuffledRDD`. Again, we get a `MapPartitionsRDD`.
 
 **3) distinct(numPartitions)**
 
-![distinct](../PNGfigures/distinct.png)
+![distinct](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/distinct.png)
 
 `distinct()` aims to deduplicate RDD records. Since duplicated records can be found in different partitions, shuffle + aggregation is needed to deduplicate the records. However, shuffle requires that the type of RDD is `RDD[(K,V)]`. If the original records have only keys (e.g., `RDD[Int]`), it should be completed as `<K,null>` through performing a `map()` (results in a `MappedRDD`). After that, `reduceByKey()` is used to do some shuffle (mapSideCombine => reduce => MapPartitionsRDD). Finally, only key is taken from `<K,null>` by `map()`(`MappedRDD`). The blue RDDs are exactly the RDDs in `reduceByKey()`.
 
 **4) cogroup(otherRDD, numPartitions)**
 
-![cogroup](../PNGfigures/cogroup.png)
+![cogroup](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/cogroup.png)
 
 Different from `groupByKey()`, `cogroup()` aggregates 2 or more RDDs. Here is a question: **Should the partition relationship between (RDD a, RDD b) and CoGroupedRDD be ShuffleDependency or OneToOneDependency?** This question is bit complex and related to the following two items.
 
@@ -196,13 +196,13 @@ Finally, it returns `deps: Array[Dependency]`, which is an array of `Dependency`
 
 **5) intersection(otherRDD)**
 
-![intersection](../PNGfigures/intersection.png)
+![intersection](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/intersection.png)
 
 `intersection()` aims to extract all the common elements from  `RDD a` and `RDD b`. `RDD[T]` is mapped into `RDD[(T,null)]`, where `T` cannot be any collections. Then, `a.cogroup(b)` (colored in blue) is performed. Next, `filter()` only keeps the records where neither of `[iter(groupA()), iter(groupB())]` is empty (`FilteredRDD`). Finally, only keys of the reocrds are kept in `MappedRDD`.
 
 6) **join(otherRDD, numPartitions)**
 
-![join](../PNGfigures/join.png)
+![join](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/join.png)
 
 `join()` takes two `RDD[(K,V)]`, like `join` in SQL. Similar to `intersection()`, it does `cogroup()` first and results in a `MappedValuesRDD` whose type is `RDD[(K, (Iterable[V1],Iterable[V2]))]`. Then, it computes the Cartesian product between the two `Iterable`, and finally `flatMap()` is performed.
 
@@ -210,7 +210,7 @@ Here are two examples, in the first one, `RDD 1` and `RDD 2` use `RangePartition
 
 **7) sortByKey(ascending, numPartitions)**
 
-![sortByKey](../PNGfigures/sortByKey.png)
+![sortByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/sortByKey.png)
 
 `sortByKey()` sorts records of `RDD[(K,V)]` by key. `ascending` is a self-explanatory boolean flag. It produces a `ShuffledRDD` which takes a `rangePartitioner`. The partitioner decides the border of each partition. For example, the first partition takes records with keys from `char A` to `char B`, and the second takes those from `char C` to `char D`. Inside each partition, records are sorted by key. Finally, the records in `MapPartitionsRDD` are in order.
 
@@ -218,7 +218,7 @@ Here are two examples, in the first one, `RDD 1` and `RDD 2` use `RangePartition
 
 **8) cartesian(otherRDD)**
 
-![cartesian](../PNGfigures/Cartesian.png)
+![cartesian](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/Cartesian.png)
 
 `Cartesian()` returns a Cartesian product of two `RDD`s. The resulting `RDD` has `#partition(RDD a) * #partition(RDD b)` partitions.
 
@@ -230,7 +230,7 @@ Need to pay attention to the dependency, each partition in `CartesianRDD` depend
 
 **9) coalesce(numPartitions, shuffle = false)**
 
-![Coalesce](../PNGfigures/Coalesce.png)
+![Coalesce](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/Coalesce.png)
 
 `coalesce()` can reorganize partitions, e.g. decrease # of partitions from 5 to 3, or increase from 5 to 10. Need to notice that when `shuffle = false`, we cannot increase partitions, because that will force a shuffle.
 

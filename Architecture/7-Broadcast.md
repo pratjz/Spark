@@ -60,7 +60,7 @@ Unlike the data transfer in `HttpBroadcast`, `TorrentBroadcast` uses `blockManag
 
 Let's see some details in `TorrentBroadcast`:
 
-![TorrentBroadcast](../PNGfigures/TorrentBroadcast.png)
+![TorrentBroadcast](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/TorrentBroadcast.png)
 
 #### Driver
 

@@ -19,7 +19,7 @@ Shuffle write is a relatively simple task if a sorted output is not required. It
 
 Its implementation is simple: add the shuffle write logic at the end of `ShuffleMapStage` (in which there's a `ShuffleMapTask`). Each output record of the final RDD in this stage is partitioned and persisted, as shown in the following diagram:
 
-![shuffle-write-no-consolidation](../PNGfigures/shuffle-write-no-consolidation.png)
+![shuffle-write-no-consolidation](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/shuffle-write-no-consolidation.png)
 
 In the diagram there're 4 `ShuffleMapTask`s to execute in the same worker node with 2 cores. The task result (records of the final RDD in the stage) is written on the local disk (data persistence). Each task has `R` buffers, `R` equals the number of reducers (the number if tasks in the next stage). The buffers are called buckets in Spark. By default the size of each bucket is 32KB (100KB before Spark 1.1) and is configurable by `spark.shuffle.file.buffer.kb` .
 
@@ -34,14 +34,14 @@ An implementation like this is very simple, but has some issues:
 
 Currently, there's no good solution to the second problem. We need to write buffers anyway and if they're too small there will be impact on IO speed. For the first problem, we have a file consolidation solution already implemented in Spark. Let's check it out:
 
-![shuffle-write-consolidation](../PNGfigures/shuffle-write-consolidation.png)
+![shuffle-write-consolidation](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/shuffle-write-consolidation.png)
 
 It's clear that from the above diagram, consecutive `ShuffleMapTask`s running on the same core share a shuffle file. Each task appends its output data, `ShuffleBlock` i', after the output data of the previous task, `ShuffleBlock` i. A `ShuffleBlock` is called a `FileSegment`. In this way, reducers in the next stage can just fetch the whole file and we reduce the number of files needed in each worker node to `cores * R`. File consolidation feature can be activated by setting `spark.shuffle.consolidateFiles` to true.
 
 ## Shuffle Read
 Let's check a physical plan of `reduceBykey`, which contains `ShuffleDependency`:
 
-![reduceByKey](../PNGfigures/reduceByKeyStage.png)
+![reduceByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/reduceByKeyStage.png)
 
 Intuitively, we need to fetch the data of `MapPartitionRDD` to be able to evaluate `ShuffleRDD`. Then come the problems:
 
@@ -86,7 +86,7 @@ Now we have discussed the main ideas behind shuffle write and shuffle read as we
 
 We have briefly talked about the fetch and reduce process of `reduceByKey()`. Note that for an RDD, not all its data is present in the memory at a given time. The processing is always on a record basis. Processed record is rejected if possible. On a record level perspective, the `reduce()` logic can be shown as below:
 
-![shuffle-reduce](../PNGfigures/reduceByKeyRecord.png)
+![shuffle-reduce](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/reduceByKeyRecord.png)
 
 We can see that the fetched records are aggregated using a HashMap, and once all the records are aggregated, we will have the result. The `func` needs to be commutative.
 
@@ -104,19 +104,19 @@ To reduce network trafic between nodes, we could use map side `combine()` in Had
 
 ### `groupByKey(numPartitions)`
 
-![ShuffleGroupByKey](../PNGfigures/ShuffleGroupByKey.png)
+![ShuffleGroupByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleGroupByKey.png)
 
 The process is similar to that of `reduceByKey()`. The `func` becomes `result = result ++ result.value`. This means that each key's values are grouped together without further aggregation.
 
 ### `distinct(numPartitions)`
 
-![ShuffleDistinct](../PNGfigures/ShuffleDistinct.png)
+![ShuffleDistinct](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleDistinct.png)
 
 Similar to `reduceByKey()`. The `func` is `result = result == null ? record.value : result`. This means that we check the existence of the record in the `HashMap`. If it exists, reject the record, otherwise insert it into the map. Like `reduceByKey()`, there's map side `combine()`.
 
 ### `cogroup(otherRDD, numPartitions)`
 
-![ShuffleCoGroup](../PNGfigures/ShuffleCoGroup.png)
+![ShuffleCoGroup](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleCoGroup.png)
 
 There could be 0, 1 or multiple `ShuffleDependency` for a `CoGroupedRDD`. But in the shuffle process we don't create a hash map for each shuffle dependency, but one hash map for all of them. Different from `reduceByKey`, the hash map is constructed in RDD's `compute()` rather than in `mapPartitionsWithContext()`.
 
@@ -124,21 +124,21 @@ A task of this RDD's execution will allocate an `Array[ArrayBuffer]`. This array
 
 ### `intersection(otherRDD)` and `join(otherRDD, numPartitions)`
 
-![intersection](../PNGfigures/ShuffleIntersection.png)
+![intersection](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleIntersection.png)
 
-![join](../PNGfigures/ShuffleJoin.png)
+![join](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleJoin.png)
 
 This two operations both use `cogroup`, so their shuffle process is identical to `cogroup`.
 
 ### sortByKey(ascending, numPartition)
 
-![sortByKey](../PNGfigures/ShuffleSortByKey.png)
+![sortByKey](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleSortByKey.png)
 
 The processing logic of `sortByKey()` is a little different from `reduceByKey()` as it does not use a `HashMap` to handle incoming fetched records. Instead, all key-value pairs are range partitioned. The records of the same partition is sorted by key.
 
 ### `coalesce(numPartitions, shuffle = true)`
 
-![Coalesce](../PNGfigures/ShuffleCoalesce.png)
+![Coalesce](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ShuffleCoalesce.png)
 
 `coalesce()` would create a `ShuffleDependency`, but it actually does not need to aggregate the fetched records, so no hash map is needed.
 
@@ -150,7 +150,7 @@ So as we have seen, hash map is a frequently used data structure in Spark's shuf
 
 The Spark documentation describes `AppendOnlyMap` as "A simple open hash table optimized for the append-only use case, where keys are never removed, but the value for each key may be changed". Its implementation is simple: allocate a big array of `Object`, as the following diagram shows. Keys are stored in the blue sections, and values are in the white sections.
 
-![AppendOnlyMap](../PNGfigures/appendonlymap.png)
+![AppendOnlyMap](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/appendonlymap.png)
 
 When a `put(K, V)` is issued, we locate the slot in the array by `hash(K)`. **If the position is already occupied, then quadratic probing technique is used to find the next slot.**. For the example in the diagram, `K6`, a third probing has found an empty slot after `K4`, then the value is inserted after the key. When `get(K6)`, we use the same technique to find the slot, get `V6` from the next slot, compute a new value, then write it to the position of `V6`.
 
@@ -162,7 +162,7 @@ There's a `destructiveSortedIterator(): Iterator[(K, V)]` method in `AppendOnlyM
 
 ### `ExternalAppendOnlyMap`
 
-![AppendOnlyMap](../PNGfigures/ExternalAppendOnlyMap.png)
+![AppendOnlyMap](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ExternalAppendOnlyMap.png)
 
 Compared with `AppendOnlyMap`, the implementation of `ExternalAppendOnlyMap` is more sophisticated. Its concept is similar to the `shuffle-merge-combine-sort` process in Hadoop.
 

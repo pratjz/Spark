@@ -4,7 +4,7 @@ In the overview chapter, we briefly introduced the DAG-like physical plan, which
 
 ## A Complex Logical Plan
 
-![ComplexJob](../PNGfigures/ComplexJob.png)
+![ComplexJob](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ComplexJob.png)
 The code of this application is attached at the end of this chapter.
 
 **How to properly determine the stages and tasks within such a complex data dependency graph?**
@@ -13,7 +13,7 @@ An intuitive idea is to associate one RDD and its preceding RDD to form a stage.
 
 If we examine the logical plan more closely, we may find out that in each RDD, the partitions are independent from each other. That is to say, inside each RDD, the data within a partition will not interfere others. With this observation, an aggressive idea is to consider the whole diagram as a single stage and create one physical task for each partition of the final RDD (`FlatMappedValuesRDD`). The following diagram illustrates this idea:
 
-![ComplexTask](../PNGfigures/ComplexTask.png)
+![ComplexTask](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ComplexTask.png)
 
 All thick arrows in above diagram belong to task1, whose result is the first partition of the final RDD of the job. Note that in order to compute the first partition of the `CoGroupedRDD`, we need to compute all partitions of its preceding RDDs (e.g., all the partitions in UnionRDD) since it's a `ShuffleDependency`. After that, we can compute the `CoGroupedRDD`'s second and third partition using task2 (thin arrows) and task3 (dashed arrows), which are much simpler.
 
@@ -25,7 +25,7 @@ Although there are problems within this idea, there is still a good point in thi
 
 It will be clearer to understand the pipelining if we look at the partition relationship from a record-level point of view. The following diagram illustrates different  patterns of record processing for RDDs with `NarrowDependency`.
 
-![Dependency](../PNGfigures/pipeline.png)
+![Dependency](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/pipeline.png)
 
 The first pattern (pipeline pattern) is equivalent to:
 
@@ -57,7 +57,7 @@ It's clear that `f`'s results need to be stored somewhere (e.g., in-memory data 
 
 Let's go back to our problem with stages and tasks. The main issue of the above aggressive idea is that we can't pipeline the data flow if there's a `ShuffleDependency`. Since `NarrowDependency` can be pipelined, we can cut off the data flow at each `ShuffleDependency`, leaving chains of RDDs connected by `NarrowDependency`. For example, we can just divide the logical plan into stages like this:
 
-![ComplextStage](../PNGfigures/ComplexJobStage.png)
+![ComplextStage](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/ComplexJobStage.png)
 
 The strategy for creating stages is to: **check backwards from the final RDD, add each `NarrowDependency` into the current stage, and break out for a new stage when there's a `ShuffleDependency`. In each stage, the task number is determined by the partition number of the last RDD in the stage.**
 
@@ -67,11 +67,11 @@ In above diagram, all thick arrows represent tasks. Since the stages are determi
 
 Let's check back the cartesian operation in the previous chapter with complex `NarrowDependency` inside:
 
-![cartesian](../PNGfigures/Cartesian.png)
+![cartesian](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/Cartesian.png)
 
 This NarrowDependency only needs one stage as follows:
 
-![cartesian](../PNGfigures/cartesianPipeline.png)
+![cartesian](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/cartesianPipeline.png)
 
 The thick arrows represent the first `ResultTask`. Since the stage directly outputs the final result, 6 `ResultTask` are generated. Different with `OneToOneDependency`, each `ResultTask` in this job needs to compute 3 RDDs (RDD a, b, and CartesianRDD) and read 2 data blocks, all executed in one single task. **We can see that regardless of the actual type of `NarrowDependency`, be it 1:1 or N:N, `NarrowDependency` chain can always be pipelined. The number of task  is the same as the partition number in the final RDD.**
 
@@ -80,7 +80,7 @@ We have known how to generate stages and tasks, next problem is that: **how the 
 
 Let's go back to the physical plan of our example application. Recall that in Hadoop MapReduce, the tasks are executed in order, `map()` generates map outputs, which are partitioned and written to local disk. Then, `shuffle-sort-aggregate` process is applied to generate reduce inputs (i.e., \<k, list(v)\> records). Finally `reduce()` is performed to generate the final result. This process is illustrated in the following diagram:
 
-![MapReduce](../PNGfigures/MapReduce.png)
+![MapReduce](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/MapReduce.png)
 
 This execution process cannot be used directly on Spark's physical plan since Hadoop MapReduce's physical plan is simple and fixed, and without pipelining.
 

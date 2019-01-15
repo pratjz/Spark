@@ -85,7 +85,7 @@ object GroupByTest {
 
 ```
 
-The code runs like the following figure in our brains:
+The code runs somewhat like the following figure:
 ![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/UserView.png)
 
 Since this is a simple application, let's estimate the runtime data size in each step:
@@ -102,7 +102,7 @@ Since this is a simple application, let's estimate the runtime data size in each
 
 ## Logical Plan
 
-The actual execution procedure is more complicated than what we described above. Generally speaking, Spark firstly creates a logical plan (namely data dependency graph) for each application, then it transforms the logical plan into a physical plan (a DAG graph of map/reduce stages and map/reduce tasks). After that, concrete map/reduce tasks will be lanuched to process the input data. Let's detail the logical plan of this application:
+The actual execution procedure is more complicated than what we discussed above. Generally speaking, Spark firstly creates a logical plan (namely data dependency graph) for each application, then it transforms the logical plan into a physical plan (a DAG graph of map/reduce stages and map/reduce tasks). After that, concrete map/reduce tasks will be lanuched to process the input data. Let's detail the logical plan of this application:
 
 The function call of `RDD.toDebugString` can return the logical plan:
 

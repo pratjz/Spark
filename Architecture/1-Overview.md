@@ -10,21 +10,21 @@ This chapter aims to answer the following questions:
 ![deploy](https://github.com/dtflaneur/Spark/blob/master/Architecture/Images/deploy.png)
 
 We can see from the deployment diagram (Standalone version):
-  - A Spark cluster has a Master node and multiple Worker nodes, which are equivalent to Hadoop's Master and Slave nodes.
+  - A Spark cluster has a Master node and multiple Worker nodes.
   - The Master node has a Master daemon process, which manages all the Worker nodes.
   - The Worker node has a Worker daemon process, responsible for communicating with the Master node and managing local Executors.
-  - In the official document, the Driver is explained as "The process running the main() function of the application and creating the SparkContext". A driver program, such as WordCount.scala, is regarded as a Spark application. If the driver program is launched on the Master node as follows:
+  - The Driver is "The process running the main() function of the application and creating the SparkContext". A driver program, such as WordCount.scala, is regarded as a Spark application. If the driver program is launched on the Master node as follows:
 
     ```scala
 	./bin/run-example SparkPi 10
 	```
-	The SparkPi program will become the Driver (on the Master node). However, if the driver program is submitted to a YARN cluster, the Driver may be scheduled to a Worker node (e.g., Worker node 2 in the diagram). If the driver program is launched on a local PC, such as running the following program in IntelliJ IDEA:
+	The SparkPi program will become the Driver (on the Master node). However, if the driver program is submitted to a YARN cluster, the Driver may be scheduled to a Worker node (e.g., Worker node 2). If the driver program is launched on a local PC, such as running the following program:
 
 	```scala
 	val sc = new SparkContext("spark://master:7077", "AppName")
 	...
 	```
-   The driver program will run atop the local PC. However, this approach is not recommended since the local PC may not be in the same network with the Worker nodes, which will slow down the communication between the driver and the executors.
+   The driver program will run on the local PC. However, this approach is not recommended since the local PC may not be in the same network with the Worker nodes, which will slow down the communication between the driver and the executors.
 
   - Each Worker manages one or multiple ExecutorBackend processes. Each ExecutorBackend launches and manages an Executor instance. Each Executor maintains a thread pool, in which each task runs as a thread.
   - Each application has one Driver and multiple Executors. The tasks within the same Executor belong to the same application.

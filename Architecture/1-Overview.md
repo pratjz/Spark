@@ -29,14 +29,9 @@ We can see from the deployment diagram (Standalone version):
   - Each Worker manages one or multiple ExecutorBackend processes. Each ExecutorBackend launches and manages an Executor instance. Each Executor maintains a thread pool, in which each task runs as a thread.
   - Each application has one Driver and multiple Executors. The tasks within the same Executor belong to the same application.
   - In Standalone deployment mode, ExecutorBackend is instantiated as CoarseGrainedExecutorBackend.
+  - Worker manages each CoarseGrainedExecutorBackend process through an ExecutorRunner instance (Object).
 
-    > In my cluster there's only one CoarseGrainedExecutorBackend process on each worker node and I didn't manage to configure multiple CoarseGrainedExecutorBackend processes on each worker node (my guess is that there'll be multiple CoarseGrainedExecutorBackend process when multiple applications are running, which needs to be confirmed).
-
-    > Check out this blog (in Chinese) [Summary on Spark Executor Driver Resource Scheduling](http://blog.csdn.net/oopsoom/article/details/38763985) by [@OopsOutOfMemory](http://weibo.com/oopsoom), if you want to know more about the relationship between Worker and Executor.
-
-  - Worker manages each CoarseGrainedExecutorBackend process thourgh an ExecutorRunner instance (Object).
-
-After studying the deployment diagram, we'll write a simple Spark application to see how the Spark application is created and executed.
+Here We'll write a simple Spark application to see how the Spark application is created and executed.
 
 ## A simple Spark application
 The example here is the `GroupByTest` application under the examples package in Spark. We assume that the application is launched on the Master node, with the following command:
